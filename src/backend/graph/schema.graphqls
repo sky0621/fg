@@ -4,14 +4,10 @@
 
 type Quest {
   id: ID!
+  title: String!
   text: String!
-  done: Boolean!
-  user: User!
-}
-
-type User {
-  id: ID!
-  name: String!
+  reward: String!
+  incentive: String
 }
 
 type Query {
@@ -21,7 +17,9 @@ type Query {
 
 input NewQuest {
   title: String!
-  userId: String!
+  text: String!
+  reward: String!
+  incentive: String
 }
 
 type Mutation {
