@@ -10,9 +10,18 @@ type Quest {
   incentive: String
 }
 
+type Negotiation {
+  id: ID!
+  note: String
+  done: Boolean!
+}
+
 type Query {
   quests: [Quest!]!
   quest(id: ID!): Quest!
+
+  negotiations: [Negotiation!]!
+  negotiation(id: ID!): Negotiation!
 }
 
 input NewQuest {
@@ -22,6 +31,15 @@ input NewQuest {
   incentive: String
 }
 
+input NewNegotiation {
+  note: String
+  done: Boolean!
+}
+
 type Mutation {
   createQuest(input: NewQuest!): Quest!
+  updateQuest(id: ID!, input: NewQuest!): Quest!
+
+  createNegotiation(input: NewNegotiation!): Negotiation!
+  updateNegotiation(id: ID!, input: NewNegotiation!): Negotiation!
 }

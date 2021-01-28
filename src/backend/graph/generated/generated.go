@@ -44,12 +44,23 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateQuest func(childComplexity int, input model.NewQuest) int
+		CreateNegotiation func(childComplexity int, input model.NewNegotiation) int
+		CreateQuest       func(childComplexity int, input model.NewQuest) int
+		UpdateNegotiation func(childComplexity int, id string, input model.NewNegotiation) int
+		UpdateQuest       func(childComplexity int, id string, input model.NewQuest) int
+	}
+
+	Negotiation struct {
+		Done func(childComplexity int) int
+		ID   func(childComplexity int) int
+		Note func(childComplexity int) int
 	}
 
 	Query struct {
-		Quest  func(childComplexity int, id string) int
-		Quests func(childComplexity int) int
+		Negotiation  func(childComplexity int, id string) int
+		Negotiations func(childComplexity int) int
+		Quest        func(childComplexity int, id string) int
+		Quests       func(childComplexity int) int
 	}
 
 	Quest struct {
@@ -63,10 +74,15 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateQuest(ctx context.Context, input model.NewQuest) (*model.Quest, error)
+	UpdateQuest(ctx context.Context, id string, input model.NewQuest) (*model.Quest, error)
+	CreateNegotiation(ctx context.Context, input model.NewNegotiation) (*model.Negotiation, error)
+	UpdateNegotiation(ctx context.Context, id string, input model.NewNegotiation) (*model.Negotiation, error)
 }
 type QueryResolver interface {
 	Quests(ctx context.Context) ([]*model.Quest, error)
 	Quest(ctx context.Context, id string) (*model.Quest, error)
+	Negotiations(ctx context.Context) ([]*model.Negotiation, error)
+	Negotiation(ctx context.Context, id string) (*model.Negotiation, error)
 }
 
 type executableSchema struct {
@@ -84,6 +100,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Mutation.createNegotiation":
+		if e.complexity.Mutation.CreateNegotiation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createNegotiation_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateNegotiation(childComplexity, args["input"].(model.NewNegotiation)), true
+
 	case "Mutation.createQuest":
 		if e.complexity.Mutation.CreateQuest == nil {
 			break
@@ -95,6 +123,70 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateQuest(childComplexity, args["input"].(model.NewQuest)), true
+
+	case "Mutation.updateNegotiation":
+		if e.complexity.Mutation.UpdateNegotiation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateNegotiation_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateNegotiation(childComplexity, args["id"].(string), args["input"].(model.NewNegotiation)), true
+
+	case "Mutation.updateQuest":
+		if e.complexity.Mutation.UpdateQuest == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateQuest_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateQuest(childComplexity, args["id"].(string), args["input"].(model.NewQuest)), true
+
+	case "Negotiation.done":
+		if e.complexity.Negotiation.Done == nil {
+			break
+		}
+
+		return e.complexity.Negotiation.Done(childComplexity), true
+
+	case "Negotiation.id":
+		if e.complexity.Negotiation.ID == nil {
+			break
+		}
+
+		return e.complexity.Negotiation.ID(childComplexity), true
+
+	case "Negotiation.note":
+		if e.complexity.Negotiation.Note == nil {
+			break
+		}
+
+		return e.complexity.Negotiation.Note(childComplexity), true
+
+	case "Query.negotiation":
+		if e.complexity.Query.Negotiation == nil {
+			break
+		}
+
+		args, err := ec.field_Query_negotiation_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Negotiation(childComplexity, args["id"].(string)), true
+
+	case "Query.negotiations":
+		if e.complexity.Query.Negotiations == nil {
+			break
+		}
+
+		return e.complexity.Query.Negotiations(childComplexity), true
 
 	case "Query.quest":
 		if e.complexity.Query.Quest == nil {
@@ -226,9 +318,18 @@ type Quest {
   incentive: String
 }
 
+type Negotiation {
+  id: ID!
+  note: String
+  done: Boolean!
+}
+
 type Query {
   quests: [Quest!]!
   quest(id: ID!): Quest!
+
+  negotiations: [Negotiation!]!
+  negotiation(id: ID!): Negotiation!
 }
 
 input NewQuest {
@@ -238,15 +339,40 @@ input NewQuest {
   incentive: String
 }
 
+input NewNegotiation {
+  note: String
+  done: Boolean!
+}
+
 type Mutation {
   createQuest(input: NewQuest!): Quest!
-}`, BuiltIn: false},
+  updateQuest(id: ID!, input: NewQuest!): Quest!
+
+  createNegotiation(input: NewNegotiation!): Negotiation!
+  updateNegotiation(id: ID!, input: NewNegotiation!): Negotiation!
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createNegotiation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewNegotiation
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNNewNegotiation2githubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNewNegotiation(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createQuest_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -263,6 +389,54 @@ func (ec *executionContext) field_Mutation_createQuest_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateNegotiation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 model.NewNegotiation
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNNewNegotiation2githubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNewNegotiation(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateQuest_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 model.NewQuest
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNNewQuest2githubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNewQuest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -275,6 +449,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_negotiation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -373,6 +562,234 @@ func (ec *executionContext) _Mutation_createQuest(ctx context.Context, field gra
 	return ec.marshalNQuest2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐQuest(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_updateQuest(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateQuest_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateQuest(rctx, args["id"].(string), args["input"].(model.NewQuest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Quest)
+	fc.Result = res
+	return ec.marshalNQuest2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐQuest(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createNegotiation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createNegotiation_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateNegotiation(rctx, args["input"].(model.NewNegotiation))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Negotiation)
+	fc.Result = res
+	return ec.marshalNNegotiation2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateNegotiation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateNegotiation_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateNegotiation(rctx, args["id"].(string), args["input"].(model.NewNegotiation))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Negotiation)
+	fc.Result = res
+	return ec.marshalNNegotiation2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Negotiation_id(ctx context.Context, field graphql.CollectedField, obj *model.Negotiation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Negotiation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Negotiation_note(ctx context.Context, field graphql.CollectedField, obj *model.Negotiation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Negotiation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Note, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Negotiation_done(ctx context.Context, field graphql.CollectedField, obj *model.Negotiation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Negotiation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Done, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_quests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -448,6 +865,83 @@ func (ec *executionContext) _Query_quest(ctx context.Context, field graphql.Coll
 	res := resTmp.(*model.Quest)
 	fc.Result = res
 	return ec.marshalNQuest2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐQuest(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_negotiations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Negotiations(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Negotiation)
+	fc.Result = res
+	return ec.marshalNNegotiation2ᚕᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_negotiation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_negotiation_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Negotiation(rctx, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Negotiation)
+	fc.Result = res
+	return ec.marshalNNegotiation2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1780,6 +2274,34 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputNewNegotiation(ctx context.Context, obj interface{}) (model.NewNegotiation, error) {
+	var it model.NewNegotiation
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "note":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("note"))
+			it.Note, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "done":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("done"))
+			it.Done, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewQuest(ctx context.Context, obj interface{}) (model.NewQuest, error) {
 	var it model.NewQuest
 	var asMap = obj.(map[string]interface{})
@@ -1852,6 +2374,55 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "updateQuest":
+			out.Values[i] = ec._Mutation_updateQuest(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createNegotiation":
+			out.Values[i] = ec._Mutation_createNegotiation(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateNegotiation":
+			out.Values[i] = ec._Mutation_updateNegotiation(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var negotiationImplementors = []string{"Negotiation"}
+
+func (ec *executionContext) _Negotiation(ctx context.Context, sel ast.SelectionSet, obj *model.Negotiation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, negotiationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Negotiation")
+		case "id":
+			out.Values[i] = ec._Negotiation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "note":
+			out.Values[i] = ec._Negotiation_note(ctx, field, obj)
+		case "done":
+			out.Values[i] = ec._Negotiation_done(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -1901,6 +2472,34 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_quest(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "negotiations":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_negotiations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "negotiation":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_negotiation(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2238,6 +2837,62 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNNegotiation2githubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiation(ctx context.Context, sel ast.SelectionSet, v model.Negotiation) graphql.Marshaler {
+	return ec._Negotiation(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNNegotiation2ᚕᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Negotiation) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNNegotiation2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNNegotiation2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNegotiation(ctx context.Context, sel ast.SelectionSet, v *model.Negotiation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Negotiation(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNNewNegotiation2githubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNewNegotiation(ctx context.Context, v interface{}) (model.NewNegotiation, error) {
+	res, err := ec.unmarshalInputNewNegotiation(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewQuest2githubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐNewQuest(ctx context.Context, v interface{}) (model.NewQuest, error) {

@@ -30,6 +30,18 @@ func (r *mutationResolver) CreateQuest(ctx context.Context, input model.NewQuest
 	return q, nil
 }
 
+func (r *mutationResolver) UpdateQuest(ctx context.Context, id string, input model.NewQuest) (*model.Quest, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CreateNegotiation(ctx context.Context, input model.NewNegotiation) (*model.Negotiation, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) UpdateNegotiation(ctx context.Context, id string, input model.NewNegotiation) (*model.Negotiation, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) Quests(ctx context.Context) ([]*model.Quest, error) {
 	results := []*model.Quest{}
 	for _, item := range r.cache.Items() {
@@ -45,6 +57,14 @@ func (r *queryResolver) Quest(ctx context.Context, id string) (*model.Quest, err
 	}
 	q := item.(*model.Quest)
 	return q, nil
+}
+
+func (r *queryResolver) Negotiations(ctx context.Context) ([]*model.Negotiation, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Negotiation(ctx context.Context, id string) (*model.Negotiation, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

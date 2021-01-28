@@ -2,6 +2,17 @@
 
 package model
 
+type Negotiation struct {
+	ID   string  `json:"id"`
+	Note *string `json:"note"`
+	Done bool    `json:"done"`
+}
+
+type NewNegotiation struct {
+	Note *string `json:"note"`
+	Done bool    `json:"done"`
+}
+
 type NewQuest struct {
 	Title     string  `json:"title"`
 	Text      string  `json:"text"`
