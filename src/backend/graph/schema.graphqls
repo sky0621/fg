@@ -2,6 +2,9 @@
 #
 # https://gqlgen.com/getting-started/
 
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
+  | FIELD_DEFINITION
+
 type Quest {
   id: ID!
   title: String!
@@ -14,6 +17,7 @@ type Negotiation {
   id: ID!
   note: String
   done: Boolean!
+  quest: Quest! @goField(forceResolver: true)
 }
 
 type Query {
@@ -32,6 +36,7 @@ input NewQuest {
 }
 
 input NewNegotiation {
+  questId: ID!
   note: String
   done: Boolean!
 }

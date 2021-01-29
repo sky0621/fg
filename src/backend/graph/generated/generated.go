@@ -36,6 +36,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Negotiation() NegotiationResolver
 	Query() QueryResolver
 }
 
@@ -51,9 +52,10 @@ type ComplexityRoot struct {
 	}
 
 	Negotiation struct {
-		Done func(childComplexity int) int
-		ID   func(childComplexity int) int
-		Note func(childComplexity int) int
+		Done  func(childComplexity int) int
+		ID    func(childComplexity int) int
+		Note  func(childComplexity int) int
+		Quest func(childComplexity int) int
 	}
 
 	Query struct {
@@ -77,6 +79,9 @@ type MutationResolver interface {
 	UpdateQuest(ctx context.Context, id string, input model.NewQuest) (*model.Quest, error)
 	CreateNegotiation(ctx context.Context, input model.NewNegotiation) (*model.Negotiation, error)
 	UpdateNegotiation(ctx context.Context, id string, input model.NewNegotiation) (*model.Negotiation, error)
+}
+type NegotiationResolver interface {
+	Quest(ctx context.Context, obj *model.Negotiation) (*model.Quest, error)
 }
 type QueryResolver interface {
 	Quests(ctx context.Context) ([]*model.Quest, error)
@@ -168,6 +173,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Negotiation.Note(childComplexity), true
+
+	case "Negotiation.quest":
+		if e.complexity.Negotiation.Quest == nil {
+			break
+		}
+
+		return e.complexity.Negotiation.Quest(childComplexity), true
 
 	case "Query.negotiation":
 		if e.complexity.Query.Negotiation == nil {
@@ -310,6 +322,9 @@ var sources = []*ast.Source{
 #
 # https://gqlgen.com/getting-started/
 
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
+  | FIELD_DEFINITION
+
 type Quest {
   id: ID!
   title: String!
@@ -322,6 +337,7 @@ type Negotiation {
   id: ID!
   note: String
   done: Boolean!
+  quest: Quest! @goField(forceResolver: true)
 }
 
 type Query {
@@ -340,6 +356,7 @@ input NewQuest {
 }
 
 input NewNegotiation {
+  questId: ID!
   note: String
   done: Boolean!
 }
@@ -788,6 +805,41 @@ func (ec *executionContext) _Negotiation_done(ctx context.Context, field graphql
 	res := resTmp.(bool)
 	fc.Result = res
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Negotiation_quest(ctx context.Context, field graphql.CollectedField, obj *model.Negotiation) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Negotiation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Negotiation().Quest(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Quest)
+	fc.Result = res
+	return ec.marshalNQuest2ᚖgithubᚗcomᚋsky0621ᚋfgᚋgraphᚋmodelᚐQuest(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_quests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2280,6 +2332,14 @@ func (ec *executionContext) unmarshalInputNewNegotiation(ctx context.Context, ob
 
 	for k, v := range asMap {
 		switch k {
+		case "questId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("questId"))
+			it.QuestID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "note":
 			var err error
 
@@ -2414,15 +2474,29 @@ func (ec *executionContext) _Negotiation(ctx context.Context, sel ast.SelectionS
 		case "id":
 			out.Values[i] = ec._Negotiation_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "note":
 			out.Values[i] = ec._Negotiation_note(ctx, field, obj)
 		case "done":
 			out.Values[i] = ec._Negotiation_done(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "quest":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Negotiation_quest(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

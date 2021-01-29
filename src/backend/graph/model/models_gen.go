@@ -3,14 +3,16 @@
 package model
 
 type Negotiation struct {
-	ID   string  `json:"id"`
-	Note *string `json:"note"`
-	Done bool    `json:"done"`
+	ID    string  `json:"id"`
+	Note  *string `json:"note"`
+	Done  bool    `json:"done"`
+	Quest *Quest  `json:"quest"`
 }
 
 type NewNegotiation struct {
-	Note *string `json:"note"`
-	Done bool    `json:"done"`
+	QuestID string  `json:"questId"`
+	Note    *string `json:"note"`
+	Done    bool    `json:"done"`
 }
 
 type NewQuest struct {
