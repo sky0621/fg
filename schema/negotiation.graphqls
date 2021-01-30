@@ -1,0 +1,22 @@
+extend type Query {
+    negotiations: [Negotiation!]!
+    negotiation(id: ID!): Negotiation!
+}
+
+extend type Mutation {
+    createNegotiation(input: NewNegotiation!): Negotiation!
+    updateNegotiation(id: ID!, input: NewNegotiation!): Negotiation!
+}
+
+type Negotiation {
+    id: ID!
+    note: String
+    done: Boolean!
+    quest: Quest! @goField(forceResolver: true)
+}
+
+input NewNegotiation {
+    questId: ID!
+    note: String
+    done: Boolean!
+}

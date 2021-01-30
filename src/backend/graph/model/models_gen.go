@@ -2,6 +2,10 @@
 
 package model
 
+type Node interface {
+	IsNode()
+}
+
 type Negotiation struct {
 	ID    string  `json:"id"`
 	Note  *string `json:"note"`
@@ -20,6 +24,14 @@ type NewQuest struct {
 	Text      string  `json:"text"`
 	Reward    string  `json:"reward"`
 	Incentive *string `json:"incentive"`
+}
+
+type NoopInput struct {
+	ClientMutationID *string `json:"clientMutationId"`
+}
+
+type NoopPayload struct {
+	ClientMutationID *string `json:"clientMutationId"`
 }
 
 type Quest struct {
