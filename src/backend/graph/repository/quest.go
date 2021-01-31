@@ -13,6 +13,7 @@ type QuestRepository interface {
 	Get(id string) (*model.Quest, error)
 	Create(id string, input model.InputQuest) (*model.Quest, error)
 	Update(id string, input model.InputQuest) (*model.Quest, error)
+	BindNegotiation(id, negotiationID string) error
 }
 
 func NewQuestRepository(cache *cache.Cache) QuestRepository {
@@ -74,8 +75,31 @@ func (r *questRepository) Update(id string, input model.InputQuest) (*model.Ques
 		Negotiation: m.Negotiation,
 		Contract:    m.Contract,
 	}
-	if err := r.cache.Add(fmt.Sprintf("quest%s", id), q, -1); err != nil {
+	if err := r.cache.Replace(fmt.Sprintf("quest%s", id), q, -1); err != nil {
 		return nil, err
 	}
 	return q, nil
+}
+
+func (r *questRepository) BindNegotiation(id, negotiationID string) error {
+	q, err := r.Get(id)
+	if err != nil {
+		return err
+	}
+	if q == nil {
+		return nil
+	}
+
+	m := &model.Quest{
+		ID:          id,
+		Title:       q.Title,
+		Text:        q.Text,
+		Reward:      q.Reward,
+		Incentive:   q.Incentive,
+		Negotiation: &model.Negotiation{ID: negotiationID},
+	}
+	if err := r.cache.Replace(fmt.Sprintf("quest%s", id), m, -1); err != nil {
+		return err
+	}
+	return nil
 }

@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/sky0621/fg/graph/generated"
@@ -40,15 +39,21 @@ func (r *queryResolver) Quest(ctx context.Context, id string) (*model.Quest, err
 	return r.questRepository.Get(id)
 }
 
+// Questに紐づくNegotiationを返す
 func (r *questResolver) Negotiation(ctx context.Context, obj *model.Quest) (*model.Negotiation, error) {
 	if obj == nil || obj.Negotiation == nil {
 		return nil, nil
 	}
-
+	return r.negotiationRepository.Get(obj.Negotiation.ID)
 }
 
+// Questに紐づくContractを返す
 func (r *questResolver) Contract(ctx context.Context, obj *model.Quest) (*model.Contract, error) {
-	panic(fmt.Errorf("not implemented"))
+	if obj == nil || obj.Contract == nil {
+		return nil, nil
+	}
+	// FIXME:
+	return nil, nil
 }
 
 // Quest returns generated.QuestResolver implementation.

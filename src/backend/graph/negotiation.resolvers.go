@@ -22,6 +22,10 @@ func (r *mutationResolver) CreateNegotiation(ctx context.Context, input model.In
 	if err != nil {
 		return nil, err
 	}
+	// QueryとNegotiationとを紐付ける
+	if err := r.questRepository.BindNegotiation(input.QuestID, id.String()); err != nil {
+		return nil, err
+	}
 	return n, nil
 }
 
