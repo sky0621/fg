@@ -8,56 +8,50 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/sky0621/fg/graph/generated"
 	"github.com/sky0621/fg/graph/model"
 )
 
-func (r *mutationResolver) CreateQuest(ctx context.Context, input model.NewQuest) (*model.Quest, error) {
+func (r *mutationResolver) CreateQuest(ctx context.Context, input model.InputQuest) (*model.Quest, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
-	q := &model.Quest{
-		ID:        id.String(),
-		Title:     input.Title,
-		Text:      input.Text,
-		Reward:    input.Reward,
-		Incentive: input.Incentive,
-	}
-	if err := r.cache.Add(fmt.Sprintf("quest%s", id.String()), q, -1); err != nil {
+	q, err := r.questRepository.Create(id.String(), input)
+	if err != nil {
 		return nil, err
 	}
 	return q, nil
 }
 
-func (r *mutationResolver) UpdateQuest(ctx context.Context, id string, input model.NewQuest) (*model.Quest, error) {
-	q := &model.Quest{
-		ID:        id,
-		Title:     input.Title,
-		Text:      input.Text,
-		Reward:    input.Reward,
-		Incentive: input.Incentive,
-	}
-	if err := r.cache.Replace(fmt.Sprintf("quest%s", id), q, -1); err != nil {
+func (r *mutationResolver) UpdateQuest(ctx context.Context, id string, input model.InputQuest) (*model.Quest, error) {
+	q, err := r.questRepository.Update(id, input)
+	if err != nil {
 		return nil, err
 	}
 	return q, nil
 }
 
 func (r *queryResolver) Quests(ctx context.Context) ([]*model.Quest, error) {
-	results := []*model.Quest{}
-	for _, item := range r.cache.Items() {
-		if v, ok := item.Object.(*model.Quest); ok {
-			results = append(results, v)
-		}
-	}
-	return results, nil
+	return r.questRepository.Find()
 }
 
 func (r *queryResolver) Quest(ctx context.Context, id string) (*model.Quest, error) {
-	item, ok := r.cache.Get(fmt.Sprintf("quest%s", id))
-	if !ok {
+	return r.questRepository.Get(id)
+}
+
+func (r *questResolver) Negotiation(ctx context.Context, obj *model.Quest) (*model.Negotiation, error) {
+	if obj == nil || obj.Negotiation == nil {
 		return nil, nil
 	}
-	q := item.(*model.Quest)
-	return q, nil
+
 }
+
+func (r *questResolver) Contract(ctx context.Context, obj *model.Quest) (*model.Contract, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+// Quest returns generated.QuestResolver implementation.
+func (r *Resolver) Quest() generated.QuestResolver { return &questResolver{r} }
+
+type questResolver struct{ *Resolver }

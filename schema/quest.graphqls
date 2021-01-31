@@ -4,8 +4,8 @@ extend type Query {
 }
 
 extend type Mutation {
-    createQuest(input: NewQuest!): Quest!
-    updateQuest(id: ID!, input: NewQuest!): Quest!
+    createQuest(input: InputQuest!): Quest!
+    updateQuest(id: ID!, input: InputQuest!): Quest!
 }
 
 type Quest {
@@ -14,9 +14,13 @@ type Quest {
     text: String!
     reward: String!
     incentive: String
+    "交渉との紐付き"
+    negotiation: Negotiation @goField(forceResolver: true)
+    "契約との紐付き"
+    contract: Contract @goField(forceResolver: true)
 }
 
-input NewQuest {
+input InputQuest {
     title: String!
     text: String!
     reward: String!

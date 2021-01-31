@@ -19,9 +19,9 @@ type Mutation {
 }
 
 input NoopInput {
-  clientMutationId: String
+  id: ID!
 }
 
 type NoopPayload {
-  clientMutationId: String
+  id: ID!
 }

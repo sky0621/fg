@@ -2,8 +2,39 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Node interface {
 	IsNode()
+}
+
+type Contract struct {
+	ID    string        `json:"id"`
+	Note  *string       `json:"note"`
+	State ContractState `json:"state"`
+	Quest *Quest        `json:"quest"`
+}
+
+type InputContract struct {
+	QuestID string  `json:"questId"`
+	Note    *string `json:"note"`
+}
+
+type InputNegotiation struct {
+	QuestID string  `json:"questId"`
+	Note    *string `json:"note"`
+	Done    bool    `json:"done"`
+}
+
+type InputQuest struct {
+	Title     string  `json:"title"`
+	Text      string  `json:"text"`
+	Reward    string  `json:"reward"`
+	Incentive *string `json:"incentive"`
 }
 
 type Negotiation struct {
@@ -13,25 +44,12 @@ type Negotiation struct {
 	Quest *Quest  `json:"quest"`
 }
 
-type NewNegotiation struct {
-	QuestID string  `json:"questId"`
-	Note    *string `json:"note"`
-	Done    bool    `json:"done"`
-}
-
-type NewQuest struct {
-	Title     string  `json:"title"`
-	Text      string  `json:"text"`
-	Reward    string  `json:"reward"`
-	Incentive *string `json:"incentive"`
-}
-
 type NoopInput struct {
-	ClientMutationID *string `json:"clientMutationId"`
+	ID string `json:"id"`
 }
 
 type NoopPayload struct {
-	ClientMutationID *string `json:"clientMutationId"`
+	ID string `json:"id"`
 }
 
 type Quest struct {
@@ -40,4 +58,51 @@ type Quest struct {
 	Text      string  `json:"text"`
 	Reward    string  `json:"reward"`
 	Incentive *string `json:"incentive"`
+	// 交渉との紐付き
+	Negotiation *Negotiation `json:"negotiation"`
+	// 契約との紐付き
+	Contract *Contract `json:"contract"`
+}
+
+type ContractState string
+
+const (
+	ContractStateCreated  ContractState = "created"
+	ContractStateFinished ContractState = "finished"
+	ContractStateDropped  ContractState = "dropped"
+)
+
+var AllContractState = []ContractState{
+	ContractStateCreated,
+	ContractStateFinished,
+	ContractStateDropped,
+}
+
+func (e ContractState) IsValid() bool {
+	switch e {
+	case ContractStateCreated, ContractStateFinished, ContractStateDropped:
+		return true
+	}
+	return false
+}
+
+func (e ContractState) String() string {
+	return string(e)
+}
+
+func (e *ContractState) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContractState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContractState", str)
+	}
+	return nil
+}
+
+func (e ContractState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

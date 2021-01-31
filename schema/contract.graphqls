@@ -1,0 +1,27 @@
+extend type Query {
+    contract(id: ID!): Contract!
+}
+
+extend type Mutation {
+    createContract(input: InputContract!): Contract!
+    "契約を破棄する"
+    discardContract(id: ID!): ID!
+}
+
+type Contract {
+    id: ID!
+    note: String
+    state: ContractState!
+    quest: Quest! @goField(forceResolver: true)
+}
+
+input InputContract {
+    questId: ID!
+    note: String
+}
+
+enum ContractState {
+    created
+    finished
+    dropped
+}
